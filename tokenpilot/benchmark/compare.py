@@ -27,9 +27,9 @@ class ComparisonResult:
     baseline_run_id: str
     candidate_run_id: str
 
-    baseline_cost_usd: Decimal
-    candidate_cost_usd: Decimal
-    net_cost_saving_usd: Decimal
+    baseline_cost_usd: Decimal | None
+    candidate_cost_usd: Decimal | None
+    net_cost_saving_usd: Decimal | None
     cost_saving_percent: float | None
 
     baseline_tokens: int
@@ -60,13 +60,13 @@ class ComparisonResult:
                 self.candidate_run_id,
 
             "baseline_cost_usd":
-                str(self.baseline_cost_usd),
+                str(self.baseline_cost_usd) if self.baseline_cost_usd is not None else None,
 
             "candidate_cost_usd":
-                str(self.candidate_cost_usd),
+                str(self.candidate_cost_usd) if self.candidate_cost_usd is not None else None,
 
             "net_cost_saving_usd":
-                str(self.net_cost_saving_usd),
+                str(self.net_cost_saving_usd) if self.net_cost_saving_usd is not None else None,
 
             "cost_saving_percent":
                 self.cost_saving_percent,
@@ -257,6 +257,18 @@ def compare_runs(
         and baseline.metadata.get("accounting_complete", True)
         and candidate.metadata.get("accounting_complete", True)
     )
+
+    # Ledger zero is a storage placeholder when evidence is missing.
+    # Never serialize it as a known cost or derive savings from it.
+    baseline_complete = baseline.metadata.get("accounting_complete", True)
+    candidate_complete = candidate.metadata.get("accounting_complete", True)
+    if not (baseline_complete and candidate_complete):
+        net_cost_saving = None
+        cost_saving_percent = None
+    if not baseline_complete:
+        baseline_cost = None
+    if not candidate_complete:
+        candidate_cost = None
 
     return ComparisonResult(
         simulation=simulation,

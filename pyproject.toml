@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tokenpilot"
-version = "0.1.0"
+version = "0.1.1"
 description = "Auditable model experiment accounting"
 requires-python = ">=3.9"
 dependencies = []
