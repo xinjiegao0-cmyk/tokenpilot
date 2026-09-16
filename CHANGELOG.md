@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased after 0.2.0
+
+- Extract reusable context compiler and strengthen invalidation/freshness.
+- Remove ineffective dedup, retaining behavior ablation evidence.
+- Add tightly bounded unknown-cost sanity and retain two real failed attempts.
+- Include preflight/client CPU overhead and safe quality diagnostics.
+- Paused at user request before v1.0.
+
 ## 0.2.0 — 2026-09-16
 
 - Add a versioned 12-task structured benchmark, four strategies, strict JSON and

@@ -12,8 +12,8 @@ live results. Python 3.9 remains supported. No legal license is selected yet.
 
 The inherited v0.1.1 context reports one successful Moonshot usage smoke, without
 billing evidence. This is connectivity evidence only, not a benchmark result.
-The local inherited suite passed 65 tests. The v0.2.0 development suite passes 104.
-No paid requests have been made during this continuation.
+The local inherited suite passed 65 tests. The current suite passes 113; lint and type checks pass.
+Exactly two bounded real sanity requests were made; both failed quality/completion and have incomplete accounting.
 
 ## Implementation sequence
 
@@ -39,14 +39,35 @@ No paid requests have been made during this continuation.
 
 Not v1.0; no release/tag created. v0.2.0 includes a 12-task structured suite,
 4 strategies, budget preflight, incremental redacted results, schema/sample,
-minimal state/planner and behavior ablations. All executions this continuation
-are offline or mocked. See BENCHMARK.md for exact scope and limitations.
+minimal state/planner and behavior ablations. Most executions are offline or mocked; two real short-task attempts are recorded in the public sanity summary. See BENCHMARK.md for exact scope and limitations.
 
 Next: complete lint/type/build checks, integrate and validate the minimal core
 where useful (avoid unused abstractions), broaden negative/adversarial tests,
 run and document ablations, inspect official provider pricing/capabilities for a
 bounded real sanity experiment if possible, and complete the release audit.
-Local overhead currently excludes transport client CPU and reporting I/O;
+Local overhead now includes amortized preflight and transport client CPU; reporting I/O is excluded;
 review the accounting scope before any net-compute claims. No LICENSE exists;
 the user permits leaving a legal TODO rather than choosing a license unilaterally.
 Do not mark v1.0 complete merely because the CLI runs or simulated tests pass.
+
+## User pause — 2026-09-16
+
+User requested uploading the latest result and stopping to adjust direction.
+Do not begin another development stage or paid experiment until the user resumes.
+Version remains 0.2.0 with follow-up fixes. No v1.0 tag/release exists; goal unfinished.
+
+Latest changes: reusable context compiler, tenant-checked artifact page-in, no
+stale-value resurrection after invalidation/expiry, removal of ineffective dedup,
+bounded unknown-cost sanity, safe quality diagnostics, and amortized setup CPU.
+
+Live sanity: exactly two short-lookup attempts. Full-history truncated (252 input,
+512 output, 511 reasoning); candidate bypass completed but failed strict quality
+(252 input, 379 output, 352 reasoning, 252 cached input). Costs unknown. See
+samples/live-sanity-2026-09-16.json. Raw replies were not retained, so the second
+quality failure cannot be diagnosed retroactively; future runs now record a safe
+specific reason. No real savings conclusion is supported.
+
+Next work after user resumes: stronger task/runtime coverage and negative tests,
+stable source/version provenance, repeatable reports, region-specific billing
+inputs, preregistered real evaluation, English README/Chinese entry, CI/release
+audit, and license TODO. Preserve the user-requested 10% five-hour quota reserve.

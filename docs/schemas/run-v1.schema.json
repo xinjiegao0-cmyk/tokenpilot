@@ -247,6 +247,12 @@
         "object",
         "null"
       ]
+    },
+    "quality_failure_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "additionalProperties": false,

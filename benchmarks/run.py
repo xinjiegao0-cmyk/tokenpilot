@@ -5,6 +5,7 @@ from decimal import Decimal
 import json
 from pathlib import Path
 import sys
+import time
 import uuid
 
 from benchmarks.smoke_live_provider import load_config
@@ -47,6 +48,7 @@ def parser():
 
 
 def execute(args):
+    setup_cpu_start = time.thread_time()
     if args.allow_unknown_cost and not args.live:
         raise ValueError('unknown-cost sanity applies only to live execution')
     if args.live and not args.allow_paid_api and not args.dry_run:
@@ -127,6 +129,7 @@ def execute(args):
         provider = OpenAICompatibleProvider(
             name='moonshot', base_url=local['MOONSHOT_BASE_URL'], api_key=local['MOONSHOT_API_KEY'],
             transport=UrllibTransport(allow_network=True), token_limit_field=capabilities.token_limit_field)
+    setup_cpu_per_case = (time.thread_time() - setup_cpu_start) / calls
     args.output_dir.mkdir(parents=True, exist_ok=True)
     batch_id = str(uuid.uuid4())
     records_path = args.output_dir / (batch_id + '.jsonl')
@@ -137,7 +140,8 @@ def execute(args):
             task_records = []
             for strategy in strategies:
                 record = run_case(task, strategy, provider, config, dataset_version=dataset['version'],
-                                  dataset_sha256=dataset_hash, pricing=prices, allow_paid_api=args.allow_paid_api)
+                                  dataset_sha256=dataset_hash, pricing=prices, allow_paid_api=args.allow_paid_api,
+                                  setup_cpu_seconds=setup_cpu_per_case)
                 record['batch_id'] = batch_id
                 record['capabilities'] = asdict(capabilities) if capabilities else None
                 output.write(json.dumps(record, ensure_ascii=False, default=str) + '\n')

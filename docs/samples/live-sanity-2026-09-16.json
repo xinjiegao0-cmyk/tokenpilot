@@ -1,0 +1,67 @@
+{
+  "schema_version": "tokenpilot-public-sanity-v1",
+  "simulation": false,
+  "date": "2026-09-16",
+  "implementation_commit": "f42b7eb",
+  "dataset_sha256": "bfcef365f9bec7f2fc950e238ca3566edf47f181658e7328e135f7c9bbf44503",
+  "model": "kimi-k2.6",
+  "provider": "moonshot",
+  "endpoint_region": "China",
+  "max_output_tokens": 512,
+  "thinking": "provider default",
+  "temperature": null,
+  "seed": null,
+  "accounting_complete": false,
+  "cost_usd": null,
+  "net_saving_usd": null,
+  "limitations": [
+    "Two attempts on one short task; no statistical efficiency evidence.",
+    "Candidate bypassed optimization; identical request hashes.",
+    "One completion truncated; one strict quality check failed.",
+    "Raw output and detailed quality diagnostic were not retained by this run.",
+    "Billing and local CPU valuation unavailable; no savings verdict.",
+    "Automatic cache usage differs between sequential attempts."
+  ],
+  "records": [
+    {
+      "task_id": "short-lookup",
+      "strategy": "full-history",
+      "started_at": "2026-09-16T14:32:31.810442+00:00",
+      "finished_at": "2026-09-16T14:32:46.915362+00:00",
+      "request_sha256": "0ae4710cce1e5301460bad119a589deb28a12cd3c07f633e895854cd4670b619",
+      "usage": {
+        "input_tokens": 252,
+        "output_tokens": 512,
+        "cached_input_tokens": 0,
+        "reasoning_tokens": 511
+      },
+      "quality_passed": false,
+      "accounting_complete": false,
+      "failure_reason": "incomplete_completion",
+      "latency_ms": {
+        "provider": 15104.684667000001,
+        "wall": 15104.961541
+      }
+    },
+    {
+      "task_id": "short-lookup",
+      "strategy": "tokenpilot",
+      "started_at": "2026-09-16T14:32:46.916127+00:00",
+      "finished_at": "2026-09-16T14:32:57.377801+00:00",
+      "request_sha256": "0ae4710cce1e5301460bad119a589deb28a12cd3c07f633e895854cd4670b619",
+      "usage": {
+        "input_tokens": 252,
+        "output_tokens": 379,
+        "cached_input_tokens": 252,
+        "reasoning_tokens": 352
+      },
+      "quality_passed": false,
+      "accounting_complete": false,
+      "failure_reason": "quality_contract_failed",
+      "latency_ms": {
+        "provider": 10461.259375,
+        "wall": 10461.907125
+      }
+    }
+  ]
+}

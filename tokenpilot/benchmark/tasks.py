@@ -30,12 +30,8 @@ def load_dataset(path=DATASET_PATH):
     return dataset, hashlib.sha256(raw).hexdigest()
 
 
-def evaluate(text, expected):
-    """Strict JSON value + exact evidence set; no LLM self-judging.
-
-The evidence requirement is authored ground truth, not general entailment scoring.
-No partial credit for a correct value with incorrect or missing evidence.
-"""
+def evaluate_detail(text, expected):
+    """Return a safe diagnostic, never model text or a model self-score."""
     def unique_object(pairs):
         result = {}
         for key, value in pairs:
@@ -45,17 +41,22 @@ No partial credit for a correct value with incorrect or missing evidence.
         return result
     try:
         actual = json.loads(text, object_pairs_hook=unique_object)
-        if not isinstance(actual, dict) or set(actual) != {'answer', 'citations'}:
-            return False
-        citations = actual['citations']
-        return (type(actual['answer']) is type(expected['answer'])
-                and actual['answer'] == expected['answer']
-                and isinstance(citations, list)
-                and all(isinstance(item, str) for item in citations)
-                and len(citations) == len(set(citations))
-                and set(citations) == set(expected['citations']))
     except (ValueError, TypeError):
-        return False
+        return False, 'invalid_or_duplicate_key_json'
+    if not isinstance(actual, dict) or set(actual) != {'answer', 'citations'}:
+        return False, 'output_schema_mismatch'
+    if type(actual['answer']) is not type(expected['answer']) or actual['answer'] != expected['answer']:
+        return False, 'answer_mismatch'
+    citations = actual['citations']
+    if (not isinstance(citations, list) or not all(isinstance(item, str) for item in citations)
+            or len(citations) != len(set(citations)) or set(citations) != set(expected['citations'])):
+        return False, 'citation_mismatch'
+    return True, None
+
+
+def evaluate(text, expected):
+    """Exact authored answer and citation set; not general entailment scoring."""
+    return evaluate_detail(text, expected)[0]
 
 
 def build_prompt(task, documents):

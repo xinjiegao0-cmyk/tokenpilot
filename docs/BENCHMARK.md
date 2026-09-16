@@ -66,7 +66,7 @@ Failures and partial usage remain in the results. Open-ended evaluation and agen
 trajectories are outside this dataset.
 
 Every strategy records planning/verification wall time and thread CPU seconds for
-context selection, prompt construction, transport client CPU and verification.
+amortized batch preflight, context selection, prompt construction, transport client CPU and verification.
 Network wait is measured as latency, not CPU consumption. Report serialization
 and file I/O are currently outside this meter. The scope is explicit; the output must not
 be described as complete machine energy or total infrastructure cost. CPU dollar
@@ -124,3 +124,15 @@ never zero. `accounting_complete` requires usage, model cost and local CPU valua
 `billing.kind` distinguishes measured, estimated, simulated and unknown. Cost success
 also requires both paired runs to pass quality and a strictly positive net saving.
 Do not pool different datasets, evaluation versions, models or price profiles.
+
+## Usage-only sanity
+
+`--live --allow-paid-api --allow-unknown-cost` explicitly permits at most two
+attempts, 512 output tokens per attempt and a 2048-byte-token input bound including
+framing. It cannot accept a price table or claim a dollar budget. Regular live
+benchmark price/budget requirements remain unchanged. Unknown costs cannot produce
+cost-based success.
+
+The two real 2026-09-16 short-lookup attempts failed completion/strict quality and
+both have incomplete accounting. See [sanitized results](samples/live-sanity-2026-09-16.json).
+They are insufficient for an optimizer effectiveness or savings claim.

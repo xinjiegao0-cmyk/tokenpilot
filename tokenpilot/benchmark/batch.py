@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 import hashlib
+import math
 import platform
 import time
 from typing import Optional
@@ -10,7 +11,7 @@ import uuid
 
 from tokenpilot import __version__
 from tokenpilot.benchmark.strategies import select_context
-from tokenpilot.benchmark.tasks import build_prompt, evaluate, EVALUATOR_VERSION
+from tokenpilot.benchmark.tasks import build_prompt, evaluate_detail, EVALUATOR_VERSION
 from tokenpilot.core.planner import Action, HeuristicPlanner, PlannerState
 from tokenpilot.providers.base import ProviderError, ProviderRequest
 from tokenpilot.telemetry.pricing import CostTotals, PricingProfile, cost_metrics
@@ -45,11 +46,13 @@ def digest(text):
 
 
 def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha256,
-             pricing: Optional[PricingProfile] = None, allow_paid_api=False):
+             pricing: Optional[PricingProfile] = None, allow_paid_api=False, setup_cpu_seconds=0.0):
     if not provider.simulation and allow_paid_api is not True:
         raise PermissionError('paid API requires explicit flag')
     if pricing is not None and (pricing.provider, pricing.model) != (provider.name, config.model):
         raise ValueError('price profile does not match provider/model')
+    if not math.isfinite(setup_cpu_seconds) or setup_cpu_seconds < 0:
+        raise ValueError('invalid amortized setup CPU')
     started_at, wall_start = utc_now(), time.perf_counter()
     # Thread CPU time excludes provider/network waits and unrelated background threads.
     cpu_start = time.thread_time()
@@ -60,6 +63,7 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
     response, failure, quality = None, None, False
     prompt, selected, provider_latency_ms = '', None, 0.0
     evaluation_ms = 0.0
+    quality_failure_reason = None
     while True:
         plan = planner.next_action(state)
         trace.append(asdict(plan))
@@ -92,12 +96,13 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
         elif plan.action == Action.VERIFY:
             evaluation_start = time.perf_counter()
             assert response is not None
-            quality = evaluate(response.text, task['expected'])
+            quality, quality_failure_reason = evaluate_detail(response.text, task['expected'])
             evaluation_ms = (time.perf_counter() - evaluation_start) * 1000
             state.verification_done = True
             if not quality:
                 failure = 'quality_contract_failed'
     local_cpu_seconds = max(0.0, time.thread_time() - cpu_start)
+    local_cpu_seconds += setup_cpu_seconds
     local_cost = (Decimal(str(local_cpu_seconds)) * config.local_usd_per_cpu_second
                   if config.local_usd_per_cpu_second is not None else None)
     task_cost, billing_kind, billing_source = None, 'unknown', None
@@ -144,16 +149,16 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
         'response_metadata': dict(response.metadata) if response else {},
         'status': 'succeeded' if quality and complete and failure is None else 'failed',
         'failure_reason': failure or ('accounting_incomplete' if not complete else None),
-        'quality_passed': quality, 'quality_method': 'strict JSON answer and ground-truth citation set',
+        'quality_passed': quality, 'quality_failure_reason': quality_failure_reason, 'quality_method': 'strict JSON answer and ground-truth citation set',
         'accounting_complete': complete, 'usage': usage,
         'billing': {'task_cost_usd': str(task_cost) if task_cost is not None else None,
                     'kind': billing_kind, 'source': billing_source,
                     'local_cost_usd': str(local_cost) if local_cost is not None else None,
                     'total_kind': total_kind,
                     'total_cost_usd': str(total.total) if complete else None},
-        'overhead': {'local_cpu_seconds': local_cpu_seconds, 'planning_ms': planning_ms,
+        'overhead': {'local_cpu_seconds': local_cpu_seconds, 'amortized_setup_cpu_seconds': setup_cpu_seconds, 'planning_ms': planning_ms,
                      'evaluation_ms': evaluation_ms, 'model_calls': 0,
-                     'scope': 'selection, prompt construction, transport client CPU and verification; all strategies'},
+                     'scope': 'amortized batch preflight plus selection, prompt, transport client CPU and verification'},
         'latency_ms': {'provider': provider_latency_ms, 'wall': (time.perf_counter() - wall_start) * 1000},
         'context': {'original_bytes': state.original_bytes, 'selected_bytes': state.selected_bytes,
                     'selected_ids': [doc['id'] for doc in selected.documents],

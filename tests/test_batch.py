@@ -152,3 +152,21 @@ class BudgetTests(unittest.TestCase):
         profile = CapabilityProfile('test', 'v1', 'max_tokens')
         with self.assertRaises(ValueError):
             profile.validate(ProviderRequest('m', 'abc', 10))
+
+
+class QualityDiagnosticsTests(unittest.TestCase):
+    def test_reason_is_specific_without_copying_reply(self):
+        from tokenpilot.benchmark.tasks import evaluate_detail
+        truth = {'answer': 7, 'citations': ['a']}
+        self.assertEqual(evaluate_detail('private text', truth), (False, 'invalid_or_duplicate_key_json'))
+        self.assertEqual(evaluate_detail('{"answer":8,"citations":["a"]}', truth), (False, 'answer_mismatch'))
+        self.assertEqual(evaluate_detail('{"answer":7,"citations":["b"]}', truth), (False, 'citation_mismatch'))
+        self.assertEqual(evaluate_detail('{"answer":7,"citations":["a"]}', truth), (True, None))
+
+    def test_preflight_overhead_is_included_in_total(self):
+        data, digest = load_dataset()
+        row = run_case(data['tasks'][0], 'tokenpilot', FixtureProvider(),
+                       BatchConfig('fixture', local_usd_per_cpu_second=D('1')),
+                       dataset_version=data['version'], dataset_sha256=digest, setup_cpu_seconds=0.5)
+        self.assertGreaterEqual(D(row['billing']['local_cost_usd']), D('0.5'))
+        self.assertEqual(row['overhead']['amortized_setup_cpu_seconds'], 0.5)
