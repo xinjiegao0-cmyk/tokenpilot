@@ -4,7 +4,7 @@ import json
 import time
 from dataclasses import asdict
 from decimal import Decimal
-from typing import Callable
+from typing import Callable, Optional
 
 from tokenpilot.providers.base import BaseProvider, ProviderError, ProviderRequest, ProviderResponse
 from tokenpilot.telemetry.experiment import ExperimentRun, QualityMetric, RunProfiler, RunStatus
@@ -24,7 +24,7 @@ class BaselineRunner:
             category="model_call", input_tokens=response.usage.input_tokens,
             output_tokens=response.usage.output_tokens,
             cached_input_tokens=response.usage.cached_input_tokens,
-            cost_usd=response.cost_usd if known else Decimal("0"),
+            cost_usd=response.cost_usd if known and response.cost_usd is not None else Decimal("0"),
             latency_ms=latency_ms, provider=self.provider.name, model=run.config["model"],
             metadata={"cost_known": known, "cost_source": response.cost_source,
                       "usage_known": response.usage_complete,
@@ -72,6 +72,7 @@ class BaselineRunner:
             try:
                 start = time.perf_counter()
                 failure = None
+                response: Optional[ProviderResponse] = None
                 try:
                     response = self.provider.generate(request)
                 except ProviderError as exc:

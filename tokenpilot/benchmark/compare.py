@@ -263,22 +263,17 @@ def compare_runs(
     baseline_complete = baseline.metadata.get("accounting_complete", True)
     candidate_complete = candidate.metadata.get("accounting_complete", True)
     if not (baseline_complete and candidate_complete):
-        net_cost_saving = None
         cost_saving_percent = None
-    if not baseline_complete:
-        baseline_cost = None
-    if not candidate_complete:
-        candidate_cost = None
 
     return ComparisonResult(
         simulation=simulation,
         baseline_run_id=baseline.run_id,
         candidate_run_id=candidate.run_id,
 
-        baseline_cost_usd=baseline_cost,
-        candidate_cost_usd=candidate_cost,
+        baseline_cost_usd=baseline_cost if baseline_complete else None,
+        candidate_cost_usd=candidate_cost if candidate_complete else None,
 
-        net_cost_saving_usd=net_cost_saving,
+        net_cost_saving_usd=net_cost_saving if baseline_complete and candidate_complete else None,
 
         cost_saving_percent=(
             cost_saving_percent

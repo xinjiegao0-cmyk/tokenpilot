@@ -1,0 +1,100 @@
+{
+  "schema_version": "tokenpilot-run-v1",
+  "run_id": "aa4df0ed-35b3-4bc1-bb6a-83d62b95102c",
+  "task_id": "short-lookup",
+  "tier": "short",
+  "strategy": "tokenpilot",
+  "started_at": "2026-09-16T14:16:20.860338+00:00",
+  "finished_at": "2026-09-16T14:16:20.860944+00:00",
+  "simulation": true,
+  "warning": "SIMULATED_SMOKE_TEST_ONLY",
+  "dataset_version": "tokenpilot-tasks-v1",
+  "dataset_sha256": "bfcef365f9bec7f2fc950e238ca3566edf47f181658e7328e135f7c9bbf44503",
+  "evaluator_version": "structured-ground-truth-v1",
+  "tokenpilot_version": "0.2.0",
+  "python_version": "3.9.6",
+  "provider": {
+    "provider": "fixture",
+    "adapter": "record-interpreter-v1",
+    "usage_method": "synthetic UTF-8 byte counts, not a model tokenizer"
+  },
+  "config": {
+    "model": "record-interpreter-v1",
+    "max_output_tokens": 1024,
+    "temperature": null,
+    "seed": null,
+    "window_bytes": 8192,
+    "retrieval_k": 8,
+    "local_usd_per_cpu_second": "0",
+    "ablation": null
+  },
+  "pricing_profile": null,
+  "request_sha256": "0ae4710cce1e5301460bad119a589deb28a12cd3c07f633e895854cd4670b619",
+  "response_sha256": "478b18ed27fc6aa3e8d01e4a617ffaa1e0a353d62700a1f9881f05ee512e51f6",
+  "response_metadata": {
+    "model": "record-interpreter-v1"
+  },
+  "status": "succeeded",
+  "failure_reason": null,
+  "quality_passed": true,
+  "quality_method": "strict JSON answer and ground-truth citation set",
+  "accounting_complete": true,
+  "usage": {
+    "input_tokens": 982,
+    "output_tokens": 57,
+    "cached_input_tokens": 0,
+    "reasoning_tokens": null
+  },
+  "billing": {
+    "task_cost_usd": "0.001039",
+    "kind": "simulated",
+    "source": "synthetic fixture rate: USD 1 per million byte-units",
+    "local_cost_usd": "0E-19",
+    "total_kind": "simulated",
+    "total_cost_usd": "0.0010390000000000000"
+  },
+  "overhead": {
+    "local_cpu_seconds": 8.86670000000006e-05,
+    "planning_ms": 0.057042000000000204,
+    "evaluation_ms": 0.009959000000003826,
+    "model_calls": 0,
+    "scope": "context selection, prompt construction and verification; all strategies"
+  },
+  "latency_ms": {
+    "provider": 0.03349999999999881,
+    "wall": 0.19912500000000138
+  },
+  "context": {
+    "original_bytes": 982,
+    "selected_bytes": 982,
+    "selected_ids": [
+      "short-lookup-e1",
+      "short-lookup-noise-0",
+      "short-lookup-noise-1"
+    ],
+    "bypassed": true,
+    "reason": "short context bypass"
+  },
+  "plan_trace": [
+    {
+      "action": "retrieve",
+      "reason": "select context without consulting ground truth",
+      "estimated_input_bytes": 982
+    },
+    {
+      "action": "call_model",
+      "reason": "context selected; one bounded generation",
+      "estimated_input_bytes": 982
+    },
+    {
+      "action": "verify",
+      "reason": "deterministic contract check required",
+      "estimated_input_bytes": 0
+    },
+    {
+      "action": "stop",
+      "reason": "quality check finished",
+      "estimated_input_bytes": 0
+    }
+  ]
+}

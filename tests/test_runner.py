@@ -38,7 +38,8 @@ class RunnerTests(unittest.TestCase):
         p = FakeProvider()
         p.simulation = False
         p.generate = lambda request: self.fail('must not call')
-        with self.assertRaises(PermissionError): self.run_fixture(p)
+        with self.assertRaises(PermissionError):
+            self.run_fixture(p)
 
     def test_unknown_cost_fails(self):
         p = FakeProvider()
@@ -75,7 +76,8 @@ class RunnerTests(unittest.TestCase):
                     {'prompt_tokens': True, 'completion_tokens': 0},
                     {'prompt_tokens': 1, 'completion_tokens': 0, 'total_tokens': 2},
                     {'prompt_tokens': 1, 'completion_tokens': 0, 'prompt_tokens_details': {'cached_tokens': 2}}):
-            with self.subTest(raw=raw), self.assertRaises(ValueError): normalize_chat_usage(raw)
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                normalize_chat_usage(raw)
 
     def test_invalid_accounting(self):
         for kwargs in ({'cost_usd': Decimal('NaN')}, {'cost_usd': Decimal('Infinity')},
@@ -93,9 +95,11 @@ class RunnerTests(unittest.TestCase):
     def test_comparison_validation(self):
         fixture = test_compare.ComparisonTests()
         a, b = fixture.make_baseline(), fixture.make_candidate()
-        with self.assertRaises(ValueError): compare_runs(a, b, max_quality_drop=.1)
+        with self.assertRaises(ValueError):
+            compare_runs(a, b, max_quality_drop=.1)
         b.task_id = 'different'
-        with self.assertRaises(ValueError): compare_runs(a, b)
+        with self.assertRaises(ValueError):
+            compare_runs(a, b)
 
     def test_incomplete_accounting_blocks_success(self):
         fixture = test_compare.ComparisonTests()

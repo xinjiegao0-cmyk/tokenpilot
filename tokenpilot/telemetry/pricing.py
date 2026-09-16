@@ -29,6 +29,8 @@ class PricingProfile:
                    for v in (self.provider, self.model, self.source, self.as_of)):
             raise ValueError("provider, model, date and source are required")
         date.fromisoformat(self.as_of)
+        if self.input_per_million_usd is None or self.output_per_million_usd is None:
+            raise ValueError('input and output prices are required')
         for value in (self.input_per_million_usd, self.output_per_million_usd,
                       self.cached_input_per_million_usd):
             if value is not None and (not isinstance(value, Decimal)
@@ -76,18 +78,20 @@ class CostTotals:
                 raise ValueError("costs must be finite nonnegative Decimals")
 
     @property
-    def total(self):
+    def total(self) -> Optional[Decimal]:
         if self.kind == "unknown" or self.task_usd is None or self.overhead_usd is None:
             return None
         return self.task_usd + self.overhead_usd
 
 
 def cost_metrics(baseline: CostTotals, candidate: CostTotals, *, quality_passed: bool):
-    complete = baseline.total is not None and candidate.total is not None
-    comparable = complete and baseline.kind == candidate.kind
-    saving = baseline.total - candidate.total if comparable else None
-    ratio = (candidate.overhead_usd / candidate.total
-             if comparable and candidate.total else None)
+    baseline_total, candidate_total = baseline.total, candidate.total
+    comparable = (baseline_total is not None and candidate_total is not None
+                  and baseline.kind == candidate.kind)
+    saving = (baseline_total - candidate_total
+              if comparable and baseline_total is not None and candidate_total is not None else None)
+    ratio = (candidate.overhead_usd / candidate_total
+             if comparable and candidate_total and candidate.overhead_usd is not None else None)
     return {
         "accounting_complete": bool(comparable),
         "billing_kind": baseline.kind if comparable else "unknown",
@@ -96,6 +100,6 @@ def cost_metrics(baseline: CostTotals, candidate: CostTotals, *, quality_passed:
         "net_saving_usd": str(saving) if saving is not None else None,
         "overhead_ratio": str(ratio) if ratio is not None else None,
         "break_even": saving >= 0 if saving is not None else None,
-        "cost_success": bool(comparable and quality_passed and saving > 0),
+        "cost_success": bool(comparable and quality_passed and saving is not None and saving > 0),
         "warning": "SIMULATED_SMOKE_TEST_ONLY" if baseline.kind == "simulated" else None,
     }

@@ -13,3 +13,5 @@ benchmarks/results/
 build/
 dist/
 .env.*
+.mypy_cache/
+.ruff_cache/

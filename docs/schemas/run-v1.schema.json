@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TokenPilot run v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "task_id",
+    "tier",
+    "strategy",
+    "started_at",
+    "finished_at",
+    "simulation",
+    "warning",
+    "dataset_version",
+    "dataset_sha256",
+    "evaluator_version",
+    "tokenpilot_version",
+    "python_version",
+    "provider",
+    "config",
+    "pricing_profile",
+    "request_sha256",
+    "response_sha256",
+    "response_metadata",
+    "status",
+    "failure_reason",
+    "quality_passed",
+    "quality_method",
+    "accounting_complete",
+    "usage",
+    "billing",
+    "overhead",
+    "latency_ms",
+    "context",
+    "plan_trace"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "tokenpilot-run-v1"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "tier": {
+      "enum": [
+        "short",
+        "medium",
+        "long"
+      ]
+    },
+    "strategy": {
+      "enum": [
+        "full-history",
+        "sliding-window",
+        "retrieval-context",
+        "tokenpilot"
+      ]
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "simulation": {
+      "type": "boolean"
+    },
+    "warning": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dataset_version": {
+      "type": "string"
+    },
+    "dataset_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "evaluator_version": {
+      "type": "string"
+    },
+    "tokenpilot_version": {
+      "type": "string"
+    },
+    "python_version": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "object"
+    },
+    "config": {
+      "type": "object"
+    },
+    "pricing_profile": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "response_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "response_metadata": {
+      "type": "object"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "failed"
+      ]
+    },
+    "failure_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "quality_passed": {
+      "type": "boolean"
+    },
+    "quality_method": {
+      "type": "string"
+    },
+    "accounting_complete": {
+      "type": "boolean"
+    },
+    "usage": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "input_tokens",
+            "output_tokens",
+            "cached_input_tokens",
+            "reasoning_tokens"
+          ],
+          "properties": {
+            "input_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "output_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cached_input_tokens": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reasoning_tokens": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "billing": {
+      "type": "object",
+      "required": [
+        "task_cost_usd",
+        "local_cost_usd",
+        "kind",
+        "source",
+        "total_kind",
+        "total_cost_usd"
+      ],
+      "properties": {
+        "task_cost_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "local_cost_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_cost_usd": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "overhead": {
+      "type": "object",
+      "required": [
+        "local_cpu_seconds",
+        "planning_ms",
+        "evaluation_ms",
+        "model_calls",
+        "scope"
+      ]
+    },
+    "latency_ms": {
+      "type": "object",
+      "required": [
+        "provider",
+        "wall"
+      ]
+    },
+    "context": {
+      "type": "object",
+      "required": [
+        "original_bytes",
+        "selected_bytes",
+        "selected_ids",
+        "bypassed",
+        "reason"
+      ]
+    },
+    "plan_trace": {
+      "type": "array",
+      "minItems": 1
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "capabilities": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "simulation": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "warning": {
+            "const": "SIMULATED_SMOKE_TEST_ONLY"
+          }
+        }
+      }
+    }
+  ]
+}

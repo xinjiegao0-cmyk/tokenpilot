@@ -12,7 +12,7 @@ live results. Python 3.9 remains supported. No legal license is selected yet.
 
 The inherited v0.1.1 context reports one successful Moonshot usage smoke, without
 billing evidence. This is connectivity evidence only, not a benchmark result.
-The local inherited suite passed 65 tests. Accounting foundations now pass 74.
+The local inherited suite passed 65 tests. The v0.2.0 development suite passes 104.
 No paid requests have been made during this continuation.
 
 ## Implementation sequence
@@ -21,7 +21,7 @@ No paid requests have been made during this continuation.
    uncached inputs, reasoning as output subset, unknown overhead blocks verdicts.
    Implemented in telemetry/pricing.py; legacy comparison now emits null costs
    and savings when accounting is explicitly incomplete. Package version aligned
-   to inherited v0.1.1. Integration with batch runner remains pending.
+   to inherited v0.1.1. Integrated into the new batch runner with estimated and unknown totals.
 2. Versioned 12–30 case short/medium/long suite, deterministic ground truth,
    full-history/sliding/retrieval baselines, batch JSON output and safe samples.
 3. Minimal semantic state, quality contracts, action/plan, provenance, freshness,
@@ -37,5 +37,16 @@ No paid requests have been made during this continuation.
 
 ## Release status
 
-Not v1.0; no release/tag created. Current changes are the first accounting stage.
+Not v1.0; no release/tag created. v0.2.0 includes a 12-task structured suite,
+4 strategies, budget preflight, incremental redacted results, schema/sample,
+minimal state/planner and behavior ablations. All executions this continuation
+are offline or mocked. See BENCHMARK.md for exact scope and limitations.
+
+Next: complete lint/type/build checks, integrate and validate the minimal core
+where useful (avoid unused abstractions), broaden negative/adversarial tests,
+run and document ablations, inspect official provider pricing/capabilities for a
+bounded real sanity experiment if possible, and complete the release audit.
+Local overhead currently excludes transport client CPU and reporting I/O;
+review the accounting scope before any net-compute claims. No LICENSE exists;
+the user permits leaving a legal TODO rather than choosing a license unilaterally.
 Do not mark v1.0 complete merely because the CLI runs or simulated tests pass.

@@ -7,7 +7,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from tokenpilot.telemetry.ledger import ResourceLedger
 
@@ -171,7 +171,7 @@ class RunProfiler:
         exc_type,
         exc_value,
         traceback,
-    ) -> bool:
+    ) -> Literal[False]:
         if self._start_ns is None:
             raise RuntimeError(
                 "RunProfiler was not started"

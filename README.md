@@ -103,3 +103,19 @@ usage 支持 prompt/input、completion/output 别名，缓存支持嵌套 cached
 [OpenAI Chat Completions](https://platform.openai.com/docs/api-reference/chat)。
 `tests/fixtures` 中的三个样本均已去掉真实标识及推理正文；缓存/成功样本为合成数据，
 截断样本复现已知的 16 input + 20 output = 36 total，其中 19 reasoning 不再次计入。
+
+## v0.2.0：结构化 benchmark（开发中）
+
+已加入 12 个固定任务、full-history / sliding-window / retrieval-context /
+TokenPilot 四种策略、确定性答案与引用校验、逐条落盘和显式预算预检。
+这是软件里程碑，**没有新增真实模型节省证据**。完整运行说明、计费范围及限制见
+[Benchmark guide](docs/BENCHMARK.md)。上方 v0.1 说明描述旧 smoke/ledger 接口；
+新 batch runner 单独区分 measured / estimated / simulated / unknown。
+
+```sh
+python3 -m benchmarks.run --dry-run
+python3 -m benchmarks.run
+```
+
+默认离线；未指定本地 CPU 价格时净成本账目保持不完整。模拟 token 是字节单位，
+不能当成模型实测 token。当前还没有选择开源许可证，也未发布 v1.0。

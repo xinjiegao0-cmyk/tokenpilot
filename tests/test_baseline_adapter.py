@@ -114,15 +114,18 @@ class BaselineAdapterTests(unittest.TestCase):
         self.assertTrue(result.simulation)
         self.assertEqual(result.to_dict()['warning'], 'SIMULATED_SMOKE_TEST_ONLY')
         b.metadata['simulation'] = False
-        with self.assertRaises(ValueError): compare_runs(a, b)
+        with self.assertRaises(ValueError):
+            compare_runs(a, b)
         b.metadata['simulation'] = True
         for key in ('dataset_version', 'evaluator_version'):
             with self.subTest(key=key):
                 b.config = dict(a.config, **{key: 'mismatch'})
-                with self.assertRaises(ValueError): compare_runs(a, b)
+                with self.assertRaises(ValueError):
+                    compare_runs(a, b)
 
     def test_real_runner_consent_blocks_transport(self):
         provider = OpenAICompatibleProvider(name='disabled', base_url='https://fixture.invalid/v1')
         provider.generate = Mock(side_effect=AssertionError('must not execute'))
-        with self.assertRaises(PermissionError): self.run_fixture(provider)
+        with self.assertRaises(PermissionError):
+            self.run_fixture(provider)
         provider.generate.assert_not_called()
