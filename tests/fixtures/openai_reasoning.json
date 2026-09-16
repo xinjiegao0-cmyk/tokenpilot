@@ -1,0 +1,24 @@
+{
+  "id": "synthetic-openai_reasoning",
+  "model": "synthetic-model",
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "TOKENPILOT_OK"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 100,
+    "completion_tokens": 20,
+    "total_tokens": 120,
+    "prompt_tokens_details": {
+      "cached_tokens": 60
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 12
+    }
+  }
+}

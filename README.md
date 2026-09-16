@@ -74,4 +74,32 @@ python3 -m benchmarks.smoke_provider
 
 ## 下一步
 
-用户确认供应商、具体模型和首次实验预算后，再确认参数支持、计费字段及计费解析器，完成对应脱敏样本测试，并设计可记录失败费用的最小真实实验。当前没有真实 API 命令行入口；候选优化、批处理、对账持久化和预算控制仍待后续实现。
+用户确认供应商、具体模型和首次实验预算后，再确认参数支持、计费字段及计费解析器，完成对应脱敏样本测试，并设计可记录失败费用的最小真实实验。已提供显式 opt-in 的真实 API smoke 入口；候选优化、批处理、对账持久化和预算控制仍待后续实现。
+
+## 真实 Moonshot usage smoke（显式付费调用）
+
+默认 `python3 -m benchmarks.smoke_live_provider` 不读取 `.env`、不联网。
+显式调用前在项目根目录本地 `.env` 配置 `MOONSHOT_API_KEY`、`MOONSHOT_BASE_URL`，
+可选 `MOONSHOT_MODEL=kimi-k2.6`。环境变量优先于 `.env`，`--model` 优先于两者。
+`.env` 只解析这些键的简单 `KEY=value`（支持配对引号和 export 前缀），不执行 shell、不做变量展开。
+不要提交 `.env` 或粘贴密钥。
+
+```sh
+cd ~/Desktop/tokenpilot
+python3 -m benchmarks.smoke_live_provider --allow-paid-api --model kimi-k2.6 --max-output-tokens 1024
+```
+
+只发一次请求，不重试；不额外设置 thinking，保留模型默认行为，省略 temperature/seed。
+1024 是包含 reasoning 的输出 token 上限，不是金额预算。返回 length 时保留 usage，smoke 退出码为 1。
+收到完整 `TOKENPILOT_OK` 时 `smoke_ok=true`、退出码为 0；这只表示连通性及回复验证通过。
+没有 billing evidence 时 `experiment_status=failed`、`accounting_complete=false` 是现有记账规则，
+不会更改实验统计或把未知费用当成免费。配置错误退出码为 2。输出不含原始回复或密钥，不自动保存文件。
+
+usage 支持 prompt/input、completion/output 别名，缓存支持嵌套 cached_tokens 及顶层 cached_tokens；
+同义字段同时出现必须一致，不能相加。reasoning_tokens 是可选 output 明细，缺失为 None，
+只写入 Ledger 事件 `metadata.usage_breakdown`，要求为非负整数且不超过 output。
+所有 total 始终等于 input + output。未知扩展字段不保存，避免保留原始响应敏感信息。
+字段依据：[Moonshot 官方 Kosong 实现](https://moonshotai.github.io/kosong/kosong/chat_provider/kimi.html)、
+[OpenAI Chat Completions](https://platform.openai.com/docs/api-reference/chat)。
+`tests/fixtures` 中的三个样本均已去掉真实标识及推理正文；缓存/成功样本为合成数据，
+截断样本复现已知的 16 input + 20 output = 36 total，其中 19 reasoning 不再次计入。

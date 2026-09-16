@@ -1,0 +1,21 @@
+{
+  "id": "synthetic-moonshot_length",
+  "model": "kimi-k2.6",
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": ""
+      },
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 16,
+    "completion_tokens": 20,
+    "total_tokens": 36,
+    "completion_tokens_details": {
+      "reasoning_tokens": 19
+    }
+  }
+}

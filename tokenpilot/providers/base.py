@@ -14,11 +14,19 @@ class Usage:
     input_tokens: int
     output_tokens: int
     cached_input_tokens: int = 0
+    # Optional output breakdown, never added to total_tokens.
+    reasoning_tokens: Optional[int] = None
 
     def __post_init__(self):
         ResourceLedger._validate(ResourceEvent(
             category="usage", input_tokens=self.input_tokens,
             output_tokens=self.output_tokens, cached_input_tokens=self.cached_input_tokens))
+
+        if self.reasoning_tokens is not None and (
+            type(self.reasoning_tokens) is not int
+            or not 0 <= self.reasoning_tokens <= self.output_tokens
+        ):
+            raise ValueError("reasoning_tokens must be an integer subset of output_tokens")
 
     @property
     def total_tokens(self):

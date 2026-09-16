@@ -21,6 +21,8 @@ class ResourceEvent:
         total_tokens = input_tokens + output_tokens
 
     cached_input_tokens MUST NOT be added again to total_tokens.
+    metadata["usage_breakdown"]["reasoning_tokens"], when present, is an
+    output subset and MUST NOT be added again either.
     """
 
     category: str

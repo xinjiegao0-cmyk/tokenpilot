@@ -28,6 +28,8 @@ class BaselineRunner:
             latency_ms=latency_ms, provider=self.provider.name, model=run.config["model"],
             metadata={"cost_known": known, "cost_source": response.cost_source,
                       "usage_known": response.usage_complete,
+                      "usage_breakdown": ({"reasoning_tokens": response.usage.reasoning_tokens}
+                                          if response.usage.reasoning_tokens is not None else {}),
                       "cost_kind": kind if has_cost else "unknown",
                       "unverified_cost_usd": str(response.cost_usd) if has_cost and not known else None},
         ))
