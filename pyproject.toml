@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tokenpilot"
+version = "0.1.0"
+description = "Auditable model experiment accounting"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+tokenpilot-smoke = "benchmarks.smoke_baseline:main"
+
+[tool.setuptools.packages.find]
+include = ["tokenpilot*", "benchmarks*"]
+
+[tool.setuptools.package-data]
+benchmarks = ["fixtures/*.json"]

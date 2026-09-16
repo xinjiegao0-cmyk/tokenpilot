@@ -1,0 +1,16 @@
+{
+  "_notice": "SYNTHETIC_FIXTURE_ONLY_NOT_REAL_BENCHMARK",
+  "_fixture_cost_usd": "0.00012",
+  "id": "chatcmpl-synthetic-001",
+  "object": "chat.completion",
+  "model": "fixture-model-v1",
+  "system_fingerprint": "fp_synthetic",
+  "choices": [{"index": 0, "message": {"role": "assistant", "content": "4", "refusal": null}, "finish_reason": "stop"}],
+  "usage": {
+    "prompt_tokens": 100,
+    "completion_tokens": 20,
+    "total_tokens": 120,
+    "prompt_tokens_details": {"cached_tokens": 60},
+    "completion_tokens_details": {"reasoning_tokens": 5}
+  }
+}
