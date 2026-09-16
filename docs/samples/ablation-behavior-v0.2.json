@@ -1,0 +1,42 @@
+{
+  "warning": "SIMULATED_SMOKE_TEST_ONLY",
+  "dataset_sha256": "bfcef365f9bec7f2fc950e238ca3566edf47f181658e7328e135f7c9bbf44503",
+  "scope": "deterministic software behavior, not real-model performance or savings",
+  "results": [
+    {
+      "ablation": "enabled",
+      "quality_passes": 12,
+      "case_count": 12,
+      "selected_context_bytes": 10377,
+      "bypass_count": 4
+    },
+    {
+      "ablation": "no-bypass",
+      "quality_passes": 12,
+      "case_count": 12,
+      "selected_context_bytes": 9099,
+      "bypass_count": 0
+    },
+    {
+      "ablation": "no-dedup",
+      "quality_passes": 12,
+      "case_count": 12,
+      "selected_context_bytes": 10377,
+      "bypass_count": 4
+    },
+    {
+      "ablation": "no-pruning",
+      "quality_passes": 12,
+      "case_count": 12,
+      "selected_context_bytes": 198537,
+      "bypass_count": 12
+    },
+    {
+      "ablation": "no-page-in",
+      "quality_passes": 10,
+      "case_count": 12,
+      "selected_context_bytes": 10215,
+      "bypass_count": 4
+    }
+  ]
+}

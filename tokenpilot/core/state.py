@@ -104,6 +104,7 @@ class SemanticState:
     tenant: str
     atoms: Dict[str, Atom] = field(default_factory=dict)
     active_ids: set = field(default_factory=set)
+    invalidations: Dict[str, str] = field(default_factory=dict)
 
     def add(self, atom: Atom):
         if atom.tenant != self.tenant:
@@ -117,8 +118,19 @@ class SemanticState:
         # Losing task relevance is not evidence that a fact is invalid.
         self.active_ids.discard(atom_id)
 
+    def invalidate(self, atom_id: str, *, reason: str):
+        if atom_id not in self.atoms or not reason.strip():
+            raise ValueError('known atom and explicit reason required')
+        self.invalidations[atom_id] = reason
+        self.active_ids.discard(atom_id)
+
     def reuse(self, key: str, *, now: float, source_hash: str) -> Optional[Atom]:
-        candidates = [atom for atom in self.atoms.values()
-                      if atom.key == key and atom.reusable(
-                          tenant=self.tenant, now=now, source_hash=source_hash)]
-        return max(candidates, key=lambda atom: atom.observed_at) if candidates else None
+        candidates = [atom for atom in self.atoms.values() if atom.key == key]
+        if not candidates:
+            return None
+        # A newer invalidation/expiry must not resurrect an older verified value.
+        latest = max(candidates, key=lambda atom: (atom.observed_at, atom.atom_id))
+        if latest.atom_id in self.invalidations or not latest.reusable(
+                tenant=self.tenant, now=now, source_hash=source_hash):
+            return None
+        return latest

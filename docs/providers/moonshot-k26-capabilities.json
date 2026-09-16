@@ -1,0 +1,8 @@
+{
+  "name": "moonshot-kimi-k2.6-text",
+  "version": "2026-09-16-official-guide",
+  "token_limit_field": "max_tokens",
+  "supports_temperature": false,
+  "supports_seed": false,
+  "framing_token_allowance": 256
+}

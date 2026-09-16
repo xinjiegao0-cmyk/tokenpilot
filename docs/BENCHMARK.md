@@ -38,7 +38,9 @@ requires rerunning the public fixture/model or separately authorized secure logg
 - Retrieval-context ranks lexical overlap with the query key and keeps 8 records.
   It is cheap and deterministic, with no embeddings or learned ranker.
 - TokenPilot bypasses contexts below 2048 bytes; otherwise it matches structured
-  keys, follows one dependency for join, and removes only byte-identical records.
+  keys, follows one dependency for join, and preserves source identity; duplicate source ids are rejected. The reusable compiler is
+`tokenpilot.runtime.context.optimize_records`; raw artifacts are content-addressed
+and retrieved through tenant-checked pointers.
   It bypasses reductions below 256 bytes. These are transparent heuristic floors,
   not empirically calibrated monetary break-even predictions.
 
@@ -53,7 +55,7 @@ The planner chooses RETRIEVE, CALL_MODEL, VERIFY and STOP one at a time. Failure
 stops without retries. Other action enum values reserve vocabulary but have no
 runtime execution implementation and are not advertised as supported tools.
 `QualityContract` and semantic-state/pointer types are early library primitives;
-reuse is not yet integrated into benchmark execution.
+cross-request semantic reuse is not enabled in benchmark execution.
 
 ## Quality and overhead
 
@@ -64,15 +66,16 @@ Failures and partial usage remain in the results. Open-ended evaluation and agen
 trajectories are outside this dataset.
 
 Every strategy records planning/verification wall time and thread CPU seconds for
-context selection, prompt construction and verification. Provider-call CPU is
-excluded from local overhead; transport client CPU, report serialization and file
-I/O are currently outside this meter. The scope is explicit; the output must not
+context selection, prompt construction, transport client CPU and verification.
+Network wait is measured as latency, not CPU consumption. Report serialization
+and file I/O are currently outside this meter. The scope is explicit; the output must not
 be described as complete machine energy or total infrastructure cost. CPU dollar
 valuation requires an explicit user rate. Estimates never become measured bills.
 A measured model charge plus estimated local CPU cost yields an estimated total.
 
-Ablations: `no-bypass`, `no-dedup`, `no-pruning`, `no-page-in`. On current unique
-fixtures dedup has no opportunity to help; do not claim benefit. Page-in is necessary
+Ablations: `no-bypass`, `no-pruning`, `no-page-in`. Dedup had no benefit on the current
+unique-source fixtures and was removed from the default path after a behavior
+ablation (see samples/ablation-behavior-v0.2.json). Page-in is necessary
 for the long join contract. Ablations currently establish software behavior only,
 not real-model cost/quality effects. Cache, compression and routing are not enabled.
 

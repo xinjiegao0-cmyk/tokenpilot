@@ -59,7 +59,6 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
     planner, trace = HeuristicPlanner(), []
     response, failure, quality = None, None, False
     prompt, selected, provider_latency_ms = '', None, 0.0
-    provider_cpu = 0.0
     evaluation_ms = 0.0
     while True:
         plan = planner.next_action(state)
@@ -74,7 +73,7 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
             state.selected_bytes, state.selection_ready = len(prompt.encode('utf-8')), True
             planning_ms = (time.perf_counter() - planning_start) * 1000
         elif plan.action == Action.CALL_MODEL:
-            call_start, call_cpu = time.perf_counter(), time.thread_time()
+            call_start = time.perf_counter()
             try:
                 response = provider.generate(ProviderRequest(config.model, prompt,
                                              config.max_output_tokens, config.temperature, config.seed))
@@ -90,7 +89,6 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
                 failure, state.failed = 'provider_exception', True
             finally:
                 provider_latency_ms = (time.perf_counter() - call_start) * 1000
-                provider_cpu = time.thread_time() - call_cpu
         elif plan.action == Action.VERIFY:
             evaluation_start = time.perf_counter()
             assert response is not None
@@ -99,7 +97,7 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
             state.verification_done = True
             if not quality:
                 failure = 'quality_contract_failed'
-    local_cpu_seconds = max(0.0, time.thread_time() - cpu_start - provider_cpu)
+    local_cpu_seconds = max(0.0, time.thread_time() - cpu_start)
     local_cost = (Decimal(str(local_cpu_seconds)) * config.local_usd_per_cpu_second
                   if config.local_usd_per_cpu_second is not None else None)
     task_cost, billing_kind, billing_source = None, 'unknown', None
@@ -155,7 +153,7 @@ def run_case(task, strategy, provider, config, *, dataset_version, dataset_sha25
                     'total_cost_usd': str(total.total) if complete else None},
         'overhead': {'local_cpu_seconds': local_cpu_seconds, 'planning_ms': planning_ms,
                      'evaluation_ms': evaluation_ms, 'model_calls': 0,
-                     'scope': 'context selection, prompt construction and verification; all strategies'},
+                     'scope': 'selection, prompt construction, transport client CPU and verification; all strategies'},
         'latency_ms': {'provider': provider_latency_ms, 'wall': (time.perf_counter() - wall_start) * 1000},
         'context': {'original_bytes': state.original_bytes, 'selected_bytes': state.selected_bytes,
                     'selected_ids': [doc['id'] for doc in selected.documents],

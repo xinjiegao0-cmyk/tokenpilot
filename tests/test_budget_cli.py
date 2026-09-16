@@ -72,3 +72,16 @@ class LiveBudgetCLITests(unittest.TestCase):
         self.assertTrue(all(row['billing']['kind'] == 'estimated' for row in rows))
         self.assertTrue(all(not row['accounting_complete'] for row in rows))
         self.assertNotIn('unit-test-credential', records[0].read_text())
+
+    def test_unknown_cost_sanity_is_tightly_token_and_call_bounded(self):
+        args = ['--live', '--allow-paid-api', '--allow-unknown-cost', '--model', 'fixture-model',
+                '--capabilities', str(self.capabilities), '--task', 'short-lookup',
+                '--strategy', 'full-history', '--strategy', 'tokenpilot', '--max-output-tokens', '512']
+        with patch('benchmarks.run.load_config', side_effect=AssertionError('no credential reads')):
+            self.assertEqual(self.run_silent(args + ['--dry-run']), 0)
+            self.assertEqual(self.run_silent(args + ['--strategy', 'sliding-window']), 2)
+            self.assertEqual(self.run_silent(args + ['--max-output-tokens', '513']), 2)
+            self.assertEqual(self.run_silent(args + ['--max-api-budget-usd', '1']), 2)
+            too_long = list(args)
+            too_long[too_long.index('--task')+1] = 'long-lookup'
+            self.assertEqual(self.run_silent(too_long), 2)

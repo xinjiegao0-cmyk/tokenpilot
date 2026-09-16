@@ -1,13 +1,13 @@
 """Context strategies operate on query/data only, never expected answers."""
-from dataclasses import dataclass
 import json
 import re
 from typing import List
 
-from tokenpilot.core.planner import BreakEvenDetector
+from tokenpilot.core.planner import BreakEvenDetector, QualityContract
+from tokenpilot.runtime.context import ContextSelection as Selection, optimize_records
 
 STRATEGIES = ('full-history', 'sliding-window', 'retrieval-context', 'tokenpilot')
-ABLATIONS = ('no-bypass', 'no-dedup', 'no-pruning', 'no-page-in')
+ABLATIONS = ('no-bypass', 'no-pruning', 'no-page-in')
 
 
 def size(documents):
@@ -16,13 +16,6 @@ def size(documents):
 
 def terms(text):
     return set(re.findall(r'[a-z0-9]+', text.lower()))
-
-
-@dataclass(frozen=True)
-class Selection:
-    documents: List[dict]
-    bypassed: bool
-    reason: str
 
 
 def lexical_retrieve(query, documents, top_k):
@@ -54,28 +47,6 @@ def select_context(query, documents, strategy, *, window_bytes=8192,
     if strategy == 'retrieval-context':
         return Selection(lexical_retrieve(query, documents, retrieval_k), False,
                          'lexical overlap top-k; no learned embeddings or ground truth access')
-    original_size = size(documents)
-    if ablation != 'no-bypass' and original_size < detector.bypass_below_bytes:
-        return Selection(list(documents), True, 'short context bypass')
-    selected = list(documents)
-    if ablation != 'no-pruning':
-        # Structured-key relevance is lossless only for this declared record-query
-        # contract. It is not a universal semantic relevance estimator.
-        selected = [doc for doc in documents if doc['key'] == query['key']]
-        if query['operation'] == 'join' and ablation != 'no-page-in':
-            linked = {doc['value'] for doc in selected if isinstance(doc['value'], str)}
-            selected += [doc for doc in documents if doc['key'] in linked]
-    if ablation != 'no-dedup':
-        # Only byte-identical records (including provenance id) can be deduplicated.
-        # Two equal values from different sources may both be needed for sum/citations.
-        seen = set()
-        unique = []
-        for doc in selected:
-            fingerprint = json.dumps(doc, ensure_ascii=False, sort_keys=True)
-            if fingerprint not in seen:
-                unique.append(doc)
-                seen.add(fingerprint)
-        selected = unique
-    if ablation != 'no-bypass' and detector.should_bypass(original_size, size(selected)):
-        return Selection(list(documents), True, 'estimated reduction below configured floor')
-    return Selection(selected, False, 'exact-key relevance with one-hop dependency page-in')
+    return optimize_records(query, documents, tenant='benchmark-public-fixtures',
+                            contract=QualityContract((query['key'],)), detector=detector,
+                            ablation=ablation)

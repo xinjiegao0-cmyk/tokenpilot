@@ -23,6 +23,8 @@ def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument('--live', action='store_true')
     result.add_argument('--allow-paid-api', action='store_true')
+    result.add_argument('--allow-unknown-cost', action='store_true',
+                        help='usage sanity only: <=2 calls, <=2048 input byte-bound, <=512 output tokens; costs unknown')
     result.add_argument('--env-file', type=Path, default=Path('.env'))
     result.add_argument('--model')
     result.add_argument('--pricing', type=Path)
@@ -45,6 +47,8 @@ def parser():
 
 
 def execute(args):
+    if args.allow_unknown_cost and not args.live:
+        raise ValueError('unknown-cost sanity applies only to live execution')
     if args.live and not args.allow_paid_api and not args.dry_run:
         raise ValueError('live execution requires --allow-paid-api')
     dataset, dataset_hash = load_dataset()
@@ -62,23 +66,31 @@ def execute(args):
     if args.live:
         if args.max_calls <= 0 or calls > args.max_calls:
             raise ValueError('planned calls exceed explicit max-calls limit')
-        if not args.model or not args.pricing or not args.capabilities:
-            raise ValueError('live mode requires model, pricing and capability files')
-        prices = PricingProfile.from_dict(json.loads(args.pricing.read_text()))
+        if not args.model or not args.capabilities:
+            raise ValueError('live mode requires model and capability file')
         capabilities = CapabilityProfile(**json.loads(args.capabilities.read_text()))
-        if prices.provider != 'moonshot' or prices.model != args.model:
-            raise ValueError('pricing must match moonshot and requested model exactly')
-        if args.max_api_budget_usd is None or args.max_api_budget_usd <= 0:
-            raise ValueError('positive --max-api-budget-usd required')
-        if not args.accept_estimated_budget:
-            raise ValueError('explicit --accept-estimated-budget required')
+        if args.allow_unknown_cost:
+            if calls > 2 or args.max_output_tokens > 512:
+                raise ValueError('usage sanity permits at most two calls and 512 output tokens per call')
+            if args.pricing or args.max_api_budget_usd is not None:
+                raise ValueError('unknown-cost sanity cannot assert a dollar budget or price')
+        else:
+            if not args.pricing:
+                raise ValueError('live benchmark requires explicit pricing')
+            prices = PricingProfile.from_dict(json.loads(args.pricing.read_text()))
+            if prices.provider != 'moonshot' or prices.model != args.model:
+                raise ValueError('pricing must match moonshot and requested model exactly')
+            if args.max_api_budget_usd is None or args.max_api_budget_usd <= 0:
+                raise ValueError('positive --max-api-budget-usd required')
+            if not args.accept_estimated_budget:
+                raise ValueError('explicit --accept-estimated-budget required')
     config = BatchConfig(args.model or 'record-interpreter-v1', args.max_output_tokens,
                          window_bytes=args.window_bytes, retrieval_k=args.retrieval_k,
                          local_usd_per_cpu_second=args.local_usd_per_cpu_second,
                          ablation=args.ablation)
     if args.live:
-        assert capabilities is not None and prices is not None
-        reserve = Decimal('0')
+        assert capabilities is not None
+        reserve = None if args.allow_unknown_cost else Decimal('0')
         for task in tasks:
             for strategy in strategies:
                 selection = select_context(task['query'], task['documents'], strategy,
@@ -87,12 +99,19 @@ def execute(args):
                                            ablation=config.ablation if strategy == 'tokenpilot' else None)
                 request = ProviderRequest(config.model, build_prompt(task, selection.documents),
                                           config.max_output_tokens, temperature=None)
-                reserve += reserve_api_cost(request, capabilities, prices)
-        if reserve > args.max_api_budget_usd:
+                capabilities.validate(request)
+                if args.allow_unknown_cost:
+                    if capabilities.input_upper_bound(request) > 2048:
+                        raise ValueError('usage sanity input exceeds 2048 byte-token bound')
+                else:
+                    assert reserve is not None and prices is not None
+                    reserve += reserve_api_cost(request, capabilities, prices)
+        if reserve is not None and reserve > args.max_api_budget_usd:
             raise ValueError('all-attempt API reserve exceeds budget; no requests sent')
     plan = {'simulation': not args.live, 'planned_calls': calls,
             'api_reserve_usd': str(reserve) if reserve is not None else None,
-            'budget_kind': 'estimated upper bound under configured prices and tokenizer assumptions',
+            'budget_kind': ('unknown cost; token-bounded sanity only' if args.allow_unknown_cost else
+                            'estimated upper bound under configured prices and tokenizer assumptions'),
             'dataset_sha256': dataset_hash, 'tasks': [task['id'] for task in tasks],
             'strategies': strategies, 'config': asdict(config)}
     if args.dry_run:

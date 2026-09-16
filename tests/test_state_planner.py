@@ -76,3 +76,23 @@ class PlannerTests(unittest.TestCase):
         self.assertTrue(detector.should_bypass(100, 5))
         self.assertTrue(detector.should_bypass(3000, 2900))
         self.assertFalse(detector.should_bypass(3000, 100))
+
+
+class StateInvalidationTests(unittest.TestCase):
+    atom = StateTests.atom
+
+    def test_invalidated_latest_does_not_resurrect_old_value(self):
+        state, old = SemanticState('tenant-a'), self.atom()
+        state.add(old)
+        newer = replace(old, atom_id='a2', observed_at=12)
+        state.add(newer)
+        state.invalidate('a2', reason='source explicitly retracted')
+        self.assertIsNone(state.reuse('owner', now=15, source_hash=old.provenance.sha256))
+        self.assertIn('a2', state.atoms)
+        self.assertIn('a2', state.invalidations)
+
+    def test_expired_latest_does_not_resurrect_old_value(self):
+        state, old = SemanticState('tenant-a'), replace(self.atom(), expires_at=100)
+        state.add(old)
+        state.add(replace(old, atom_id='a2', observed_at=12, expires_at=14))
+        self.assertIsNone(state.reuse('owner', now=15, source_hash=old.provenance.sha256))
